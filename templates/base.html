@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Healthcare Assistant{% endblock %}</title>
+    
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1><a href="{{ url_for('dashboard') }}">🏥 AI Healthcare Assistant</a></h1>
+            </div>
+            
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a></li>
+                    <li><a href="{{ url_for('symptom_checker') }}" class="nav-link">Symptom Checker</a></li>
+                    <li><a href="{{ url_for('get_location') }}" class="nav-link">GPS Location</a></li>
+                    <li><a href="{{ url_for('book_appointment') }}" class="nav-link">Book Appointment</a></li>
+                    <li><a href="{{ url_for('medical_history') }}" class="nav-link">Medical History</a></li>
+                </ul>
+            </nav>
+            
+            <!-- Mobile Menu Toggle -->
+            <div class="nav-toggle" id="mobile-menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="main-content">
+        <!-- Emergency Alert Banner (hidden by default) -->
+        <div id="emergency-alert" class="emergency-alert hidden">
+            <div class="alert-content">
+                <span class="alert-icon">🚨</span>
+                <div class="alert-text">
+                    <strong>EMERGENCY DETECTED!</strong>
+                    <p id="emergency-message">Please seek immediate medical attention.</p>
+                </div>
+                <div class="alert-actions">
+                    <button id="call-ambulance" class="btn btn-emergency">Call Ambulance</button>
+                    <button id="dismiss-alert" class="btn btn-secondary">Dismiss</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2024 AI Healthcare Assistant - Academic Project</p>
+            <p>For educational purposes only. Not for actual medical diagnosis.</p>
+        </div>
+    </footer>
+
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">🌙</button>
+
+    <!-- JavaScript Files -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/emergency.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/location.js') }}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

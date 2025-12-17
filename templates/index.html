@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Healthcare Assistant{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>🏥 AI Healthcare Assistant</h1>
+    <p>Your comprehensive healthcare companion for symptom analysis, emergency detection, and medical assistance.</p>
+    <p class="text-secondary">Session ID: {{ data.user_id[:8] }}... | Version: {{ data.version }}</p>
+</div>
+
+<div class="dashboard-grid staggered">
+    <!-- Symptom Checker Card -->
+    <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <h3 class="feature-title">Symptom Checker</h3>
+        <p class="feature-description">
+            Enter your symptoms and get AI-powered disease predictions with confidence levels and severity assessment.
+        </p>
+        <a href="{{ url_for('symptom_checker') }}" class="btn btn-primary btn-full-width">Check Symptoms</a>
+    </div>
+
+    <!-- Emergency Detection Card -->
+    <div class="feature-card">
+        <span class="feature-icon">🚨</span>
+        <h3 class="feature-title">Emergency Detection</h3>
+        <p class="feature-description">
+            Automatic emergency detection based on symptoms with immediate ambulance contact and GPS location.
+        </p>
+        <button onclick="checkEmergencyStatus()" class="btn btn-emergency btn-full-width">Emergency Check</button>
+    </div>
+
+    <!-- GPS Location Card -->
+    <div class="feature-card">
+        <span class="feature-icon">📍</span>
+        <h3 class="feature-title">GPS Location</h3>
+        <p class="feature-description">
+            Track your location and find nearby hospitals, clinics, and emergency services in your area.
+        </p>
+        <a href="{{ url_for('get_location') }}" class="btn btn-primary btn-full-width">Get Location</a>
+    </div>
+
+    <!-- Doctor Recommendations Card -->
+    <div class="feature-card">
+        <span class="feature-icon">👨‍⚕️</span>
+        <h3 class="feature-title">Doctor Recommendations</h3>
+        <p class="feature-description">
+            Get personalized doctor recommendations based on your predicted conditions and specialization needs.
+        </p>
+        <button onclick="showDoctorSearch()" class="btn btn-primary btn-full-width">Find Doctors</button>
+    </div>
+
+    <!-- Medical History Card -->
+    <div class="feature-card">
+        <span class="feature-icon">📋</span>
+        <h3 class="feature-title">Medical History</h3>
+        <p class="feature-description">
+            View your complete medical history including predictions, appointments, and emergency logs with analytics.
+        </p>
+        <a href="{{ url_for('medical_history') }}" class="btn btn-primary btn-full-width">View History</a>
+    </div>
+
+    <!-- Health Tips Card -->
+    <div class="feature-card">
+        <span class="feature-icon">💡</span>
+        <h3 class="feature-title">Health Tips</h3>
+        <p class="feature-description">
+            Get personalized health recommendations and tips based on your medical history and health patterns.
+        </p>
+        <button onclick="EnhancedFeatures.showHealthTipsModal()" class="btn btn-primary btn-full-width">Get Health Tips</button>
+    </div>
+
+    <!-- Health Chatbot Card -->
+    <div class="feature-card">
+        <span class="feature-icon">🤖</span>
+        <h3 class="feature-title">Health Assistant</h3>
+        <p class="feature-description">
+            Chat with our AI health assistant for general health guidance and navigation help.
+        </p>
+        <button onclick="EnhancedFeatures.openChatbot()" class="btn btn-primary btn-full-width">Start Chat</button>
+    </div>
+
+    <!-- Daily Health Tip Card -->
+    <div class="feature-card">
+        <span class="feature-icon">🌟</span>
+        <h3 class="feature-title">Daily Health Tip</h3>
+        <div id="daily-tip-container">
+            <p class="feature-description">Loading today's health tip...</p>
+        </div>
+        <button onclick="EnhancedFeatures.showHealthTipsModal()" class="btn btn-outline btn-full-width">More Tips</button>
+    </div>
+
+    <!-- Appointment Booking Card -->
+    <div class="feature-card">
+        <span class="feature-icon">📅</span>
+        <h3 class="feature-title">Book Appointment</h3>
+        <p class="feature-description">
+            Schedule appointments with recommended doctors, manage your bookings, and receive confirmations.
+        </p>
+        <a href="{{ url_for('book_appointment') }}" class="btn btn-primary btn-full-width">Book Now</a>
+    </div>
+
+    <!-- Medical History Card -->
+    <div class="feature-card">
+        <span class="feature-icon">📋</span>
+        <h3 class="feature-title">Medical History</h3>
+        <p class="feature-description">
+            View your previous symptoms, diagnoses, appointments, and track your health journey over time.
+        </p>
+        <a href="{{ url_for('medical_history') }}" class="btn btn-primary btn-full-width">View History</a>
+    </div>
+</div>
+
+<!-- Quick Stats Section -->
+<div class="results-container">
+    <h3>Quick Health Stats</h3>
+    <div class="dashboard-grid">
+        <div class="result-item">
+            <h4>Recent Predictions</h4>
+            <p id="recent-predictions-count">Loading...</p>
+        </div>
+        <div class="result-item">
+            <h4>Upcoming Appointments</h4>
+            <p id="upcoming-appointments-count">Loading...</p>
+        </div>
+        <div class="result-item">
+            <h4>Emergency Alerts</h4>
+            <p id="emergency-alerts-count">Loading...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Doctor Search Modal (Hidden by default) -->
+<div id="doctor-search-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Search Doctors</h3>
+            <button onclick="hideDoctorSearch()" class="btn btn-secondary">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="disease-search" class="form-label">Enter Disease or Condition:</label>
+                <input type="text" id="disease-search" class="form-input" placeholder="e.g., Common Cold, Heart Disease">
+            </div>
+            <button onclick="searchDoctors()" class="btn btn-primary">Search Doctors</button>
+        </div>
+        <div id="doctor-results" class="modal-results"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dashboard-specific JavaScript
+
+// Load dashboard stats on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+});
+
+/**
+ * Load dashboard statistics
+ */
+function loadDashboardStats() {
+    // Simulate loading stats (will be replaced with actual API calls)
+    setTimeout(() => {
+        document.getElementById('recent-predictions-count').textContent = '3 predictions this week';
+        document.getElementById('upcoming-appointments-count').textContent = '2 appointments scheduled';
+        document.getElementById('emergency-alerts-count').textContent = 'No active alerts';
+    }, 1000);
+}
+
+/**
+ * Check emergency status
+ */
+function checkEmergencyStatus() {
+    // Simulate emergency check
+    const symptoms = prompt('Enter symptoms separated by commas (e.g., chest pain, shortness of breath):');
+    
+    if (symptoms) {
+        // Show loading
+        HealthcareApp.showNotification('Checking for emergency conditions...', 'info');
+        
+        // Simulate API call
+        setTimeout(() => {
+            const isEmergency = symptoms.toLowerCase().includes('chest pain') || 
+                              symptoms.toLowerCase().includes('shortness of breath') ||
+                              symptoms.toLowerCase().includes('severe headache');
+            
+            if (isEmergency) {
+                HealthcareApp.showEmergencyAlert(
+                    'EMERGENCY DETECTED! Based on your symptoms, you may need immediate medical attention. Please call emergency services or visit the nearest hospital.',
+                    '+1-911-EMERGENCY'
+                );
+            } else {
+                HealthcareApp.showNotification('No emergency detected. Consider using the symptom checker for detailed analysis.', 'success');
+            }
+        }, 2000);
+    }
+}
+
+/**
+ * Show doctor search modal
+ */
+function showDoctorSearch() {
+    const modal = document.getElementById('doctor-search-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.getElementById('disease-search').focus();
+    }
+}
+
+/**
+ * Hide doctor search modal
+ */
+function hideDoctorSearch() {
+    const modal = document.getElementById('doctor-search-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.getElementById('doctor-results').innerHTML = '';
+    }
+}
+
+/**
+ * Search for doctors
+ */
+function searchDoctors() {
+    const disease = document.getElementById('disease-search').value.trim();
+    const resultsDiv = document.getElementById('doctor-results');
+    
+    if (!disease) {
+        HealthcareApp.showNotification('Please enter a disease or condition', 'warning');
+        return;
+    }
+    
+    // Show loading
+    resultsDiv.innerHTML = '<div class="loading-container"><span class="loading"></span> Searching doctors...</div>';
+    
+    // Simulate API call to get doctors
+    HealthcareApp.makeRequest(`/doctors/${encodeURIComponent(disease)}`)
+        .then(response => {
+            if (response.success && response.doctors.length > 0) {
+                let html = '<h4>Recommended Doctors:</h4>';
+                response.doctors.forEach(doctor => {
+                    html += `
+                        <div class="result-item">
+                            <h5>${doctor.name}</h5>
+                            <p><strong>Specialization:</strong> ${doctor.specialization}</p>
+                            <p><strong>Availability:</strong> ${doctor.availability}</p>
+                            <p><strong>Contact:</strong> ${doctor.contact}</p>
+                            <p><strong>Rating:</strong> ⭐ ${doctor.rating}/5</p>
+                            <button onclick="bookWithDoctor('${doctor.name}')" class="btn btn-primary">Book Appointment</button>
+                        </div>
+                    `;
+                });
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = '<p>No doctors found for this condition. Please try a different search term.</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error searching doctors:', error);
+            resultsDiv.innerHTML = '<p class="error">Error searching doctors. Please try again.</p>';
+        });
+}
+
+/**
+ * Book appointment with specific doctor
+ */
+function bookWithDoctor(doctorName) {
+    hideDoctorSearch();
+    HealthcareApp.showNotification(`Redirecting to book appointment with ${doctorName}...`, 'info');
+    
+    // Redirect to appointment booking with pre-selected doctor
+    setTimeout(() => {
+        window.location.href = `/book-appointment?doctor=${encodeURIComponent(doctorName)}`;
+    }, 1500);
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('doctor-search-modal');
+    if (event.target === modal) {
+        hideDoctorSearch();
+    }
+});
+</script>
+
+<style>
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--bg-primary);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-heavy);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.modal-body {
+    margin-bottom: 1rem;
+}
+
+.modal-results {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 2rem;
+}
+
+.error {
+    color: var(--emergency-color);
+    font-weight: 600;
+}
+</style>
+{% endblock %}

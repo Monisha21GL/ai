@@ -1,0 +1,812 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Recommendations - AI Healthcare Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👨‍⚕️ Doctor Recommendations</h1>
+    <p>Find qualified doctors and specialists based on your medical needs and location.</p>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="form-container">
+    <h3>🔍 Find Doctors</h3>
+    
+    <div class="search-form">
+        <div class="form-group">
+            <label for="disease-search" class="form-label">Search by Condition or Disease</label>
+            <input type="text" id="disease-search" class="form-input" 
+                   placeholder="e.g., Common Cold, Heart Disease, Diabetes">
+        </div>
+        
+        <div class="form-group">
+            <label for="specialization-filter" class="form-label">Filter by Specialization</label>
+            <select id="specialization-filter" class="form-select">
+                <option value="">All Specializations</option>
+                <option value="General Medicine">General Medicine</option>
+                <option value="Cardiology">Cardiology</option>
+                <option value="Neurology">Neurology</option>
+                <option value="Orthopedics">Orthopedics</option>
+                <option value="Dermatology">Dermatology</option>
+                <option value="Pediatrics">Pediatrics</option>
+                <option value="Psychiatry">Psychiatry</option>
+                <option value="Emergency Medicine">Emergency Medicine</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="availability-filter" class="form-label">Availability</label>
+            <select id="availability-filter" class="form-select">
+                <option value="">Any Availability</option>
+                <option value="Available">Available Now</option>
+                <option value="Busy">Busy (Limited Slots)</option>
+            </select>
+        </div>
+        
+        <div class="search-actions">
+            <button onclick="searchDoctors()" class="btn btn-primary">🔍 Search Doctors</button>
+            <button onclick="clearFilters()" class="btn btn-secondary">🗑️ Clear Filters</button>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Specialization Links -->
+<div class="specialization-grid">
+    <h3>🏥 Browse by Specialization</h3>
+    <div class="specialization-cards">
+        <div class="spec-card" onclick="filterBySpecialization('General Medicine')">
+            <span class="spec-icon">🩺</span>
+            <h4>General Medicine</h4>
+            <p>Primary care physicians</p>
+        </div>
+        
+        <div class="spec-card" onclick="filterBySpecialization('Cardiology')">
+            <span class="spec-icon">❤️</span>
+            <h4>Cardiology</h4>
+            <p>Heart specialists</p>
+        </div>
+        
+        <div class="spec-card" onclick="filterBySpecialization('Neurology')">
+            <span class="spec-icon">🧠</span>
+            <h4>Neurology</h4>
+            <p>Brain & nervous system</p>
+        </div>
+        
+        <div class="spec-card" onclick="filterBySpecialization('Emergency Medicine')">
+            <span class="spec-icon">🚨</span>
+            <h4>Emergency Medicine</h4>
+            <p>Emergency care doctors</p>
+        </div>
+        
+        <div class="spec-card" onclick="filterBySpecialization('Pediatrics')">
+            <span class="spec-icon">👶</span>
+            <h4>Pediatrics</h4>
+            <p>Children's healthcare</p>
+        </div>
+        
+        <div class="spec-card" onclick="filterBySpecialization('Orthopedics')">
+            <span class="spec-icon">🦴</span>
+            <h4>Orthopedics</h4>
+            <p>Bone & joint specialists</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search Results -->
+<div id="search-results" class="results-container hidden">
+    <div class="results-header">
+        <h3>🎯 Search Results</h3>
+        <p id="results-summary">Found <span id="results-count">0</span> doctors</p>
+    </div>
+    
+    <div id="doctors-list" class="doctors-grid">
+        <!-- Doctor cards will be populated by JavaScript -->
+    </div>
+</div>
+
+<!-- All Doctors Display -->
+{% if data and not data.error %}
+<div class="results-container">
+    <h3>👥 All Available Doctors ({{ data.total_doctors }} total)</h3>
+    
+    {% if data.specializations %}
+        {% for specialization, doctors in data.specializations.items() %}
+        <div class="specialization-section">
+            <h4>{{ specialization }} ({{ doctors|length }} doctors)</h4>
+            <div class="doctors-grid">
+                {% for doctor in doctors %}
+                <div class="doctor-card">
+                    <div class="doctor-header">
+                        <span class="doctor-avatar">👨‍⚕️</span>
+                        <div class="doctor-info">
+                            <h5>{{ doctor.name }}</h5>
+                            <p class="doctor-specialization">{{ doctor.specialization }}</p>
+                        </div>
+                        <div class="availability-badge {{ 'available' if doctor.availability == 'Available' else 'busy' }}">
+                            {{ doctor.availability }}
+                        </div>
+                    </div>
+                    
+                    <div class="doctor-details">
+                        <p><strong>📞 Contact:</strong> {{ doctor.contact }}</p>
+                        <p><strong>⭐ Rating:</strong> {{ doctor.rating }}/5.0</p>
+                        {% if doctor.experience %}
+                        <p><strong>🎓 Experience:</strong> {{ doctor.experience }} years</p>
+                        {% endif %}
+                        {% if doctor.location %}
+                        <p><strong>📍 Location:</strong> {{ doctor.location }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="doctor-actions">
+                        <button onclick="bookWithDoctor('{{ doctor.name }}')" class="btn btn-primary">📅 Book Appointment</button>
+                        <button onclick="callDoctor('{{ doctor.contact }}')" class="btn btn-secondary">📞 Call</button>
+                        <button onclick="viewDoctorProfile('{{ doctor.name }}')" class="btn btn-secondary">👁️ View Profile</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% elif data and data.error %}
+<div class="results-container">
+    <div class="error-message">
+        <h3>⚠️ Error Loading Doctors</h3>
+        <p>{{ data.error }}</p>
+        <button onclick="location.reload()" class="btn btn-primary">🔄 Retry</button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Doctor Profile Modal -->
+<div id="doctor-profile-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modal-doctor-name">Doctor Profile</h3>
+            <button onclick="closeDoctorProfile()" class="btn btn-secondary">&times;</button>
+        </div>
+        <div class="modal-body" id="doctor-profile-content">
+            <!-- Profile content will be populated by JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button onclick="bookFromProfile()" class="btn btn-primary">📅 Book Appointment</button>
+            <button onclick="closeDoctorProfile()" class="btn btn-secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Doctor Recommendations JavaScript
+
+let allDoctors = [];
+let filteredDoctors = [];
+let currentDoctorProfile = null;
+
+// Load all doctors data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllDoctors();
+});
+
+/**
+ * Load all doctors from server
+ */
+function loadAllDoctors() {
+    // If we have server-side data, use it
+    {% if data and data.all_doctors %}
+    allDoctors = {{ data.all_doctors | tojson }};
+    filteredDoctors = [...allDoctors];
+    {% else %}
+    // Fallback: load from API
+    fetch('/doctors')
+        .then(response => response.text())
+        .then(html => {
+            // Parse doctors from HTML or use API endpoint
+            console.log('Doctors page loaded');
+        })
+        .catch(error => {
+            console.error('Error loading doctors:', error);
+            HealthcareApp.showNotification('Failed to load doctors data', 'error');
+        });
+    {% endif %}
+}
+
+/**
+ * Search doctors by disease/condition
+ */
+function searchDoctors() {
+    const diseaseQuery = document.getElementById('disease-search').value.trim();
+    const specializationFilter = document.getElementById('specialization-filter').value;
+    const availabilityFilter = document.getElementById('availability-filter').value;
+    
+    if (diseaseQuery) {
+        // Search by disease using API
+        searchDoctorsByDisease(diseaseQuery, specializationFilter, availabilityFilter);
+    } else {
+        // Filter existing doctors
+        filterDoctors(specializationFilter, availabilityFilter);
+    }
+}
+
+/**
+ * Search doctors by disease using API
+ */
+function searchDoctorsByDisease(disease, specialization, availability) {
+    HealthcareApp.showNotification('Searching doctors...', 'info');
+    
+    let url = `/doctors/${encodeURIComponent(disease)}?limit=10`;
+    if (availability) {
+        url += `&availability=${encodeURIComponent(availability)}`;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displaySearchResults(data.recommendations, `Doctors for "${disease}"`);
+            } else {
+                HealthcareApp.showNotification(data.message || 'No doctors found', 'warning');
+                displaySearchResults([], `No doctors found for "${disease}"`);
+            }
+        })
+        .catch(error => {
+            console.error('Doctor search error:', error);
+            HealthcareApp.showNotification('Search failed. Please try again.', 'error');
+        });
+}
+
+/**
+ * Filter doctors by criteria
+ */
+function filterDoctors(specialization, availability) {
+    let filtered = [...allDoctors];
+    
+    if (specialization) {
+        filtered = filtered.filter(doctor => 
+            doctor.specialization.toLowerCase().includes(specialization.toLowerCase())
+        );
+    }
+    
+    if (availability) {
+        filtered = filtered.filter(doctor => 
+            doctor.availability === availability
+        );
+    }
+    
+    filteredDoctors = filtered;
+    displaySearchResults(filtered, 'Filtered Results');
+}
+
+/**
+ * Filter by specialization (quick links)
+ */
+function filterBySpecialization(specialization) {
+    document.getElementById('specialization-filter').value = specialization;
+    document.getElementById('disease-search').value = '';
+    document.getElementById('availability-filter').value = '';
+    
+    filterDoctors(specialization, '');
+}
+
+/**
+ * Display search results
+ */
+function displaySearchResults(doctors, title) {
+    const resultsContainer = document.getElementById('search-results');
+    const doctorsList = document.getElementById('doctors-list');
+    const resultsCount = document.getElementById('results-count');
+    
+    resultsCount.textContent = doctors.length;
+    
+    if (doctors.length === 0) {
+        doctorsList.innerHTML = `
+            <div class="no-results">
+                <h4>😔 No doctors found</h4>
+                <p>Try adjusting your search criteria or browse all doctors below.</p>
+            </div>
+        `;
+    } else {
+        doctorsList.innerHTML = '';
+        
+        doctors.forEach(doctor => {
+            const doctorCard = createDoctorCard(doctor);
+            doctorsList.appendChild(doctorCard);
+        });
+    }
+    
+    resultsContainer.classList.remove('hidden');
+    resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    HealthcareApp.showNotification(`Found ${doctors.length} doctors`, 'success');
+}
+
+/**
+ * Create doctor card element
+ */
+function createDoctorCard(doctor) {
+    const card = document.createElement('div');
+    card.className = 'doctor-card';
+    
+    const availabilityClass = doctor.availability === 'Available' ? 'available' : 'busy';
+    
+    card.innerHTML = `
+        <div class="doctor-header">
+            <span class="doctor-avatar">👨‍⚕️</span>
+            <div class="doctor-info">
+                <h5>${doctor.name}</h5>
+                <p class="doctor-specialization">${doctor.specialization}</p>
+            </div>
+            <div class="availability-badge ${availabilityClass}">
+                ${doctor.availability}
+            </div>
+        </div>
+        
+        <div class="doctor-details">
+            <p><strong>📞 Contact:</strong> ${doctor.contact}</p>
+            <p><strong>⭐ Rating:</strong> ${doctor.rating}/5.0</p>
+            ${doctor.experience ? `<p><strong>🎓 Experience:</strong> ${doctor.experience} years</p>` : ''}
+            ${doctor.location ? `<p><strong>📍 Location:</strong> ${doctor.location}</p>` : ''}
+            ${doctor.confidence ? `<p><strong>🎯 Match:</strong> ${(doctor.confidence * 100).toFixed(0)}%</p>` : ''}
+        </div>
+        
+        <div class="doctor-actions">
+            <button onclick="bookWithDoctor('${doctor.name}')" class="btn btn-primary">📅 Book Appointment</button>
+            <button onclick="callDoctor('${doctor.contact}')" class="btn btn-secondary">📞 Call</button>
+            <button onclick="viewDoctorProfile('${doctor.name}')" class="btn btn-secondary">👁️ View Profile</button>
+        </div>
+    `;
+    
+    return card;
+}
+
+/**
+ * Clear all filters
+ */
+function clearFilters() {
+    document.getElementById('disease-search').value = '';
+    document.getElementById('specialization-filter').value = '';
+    document.getElementById('availability-filter').value = '';
+    
+    document.getElementById('search-results').classList.add('hidden');
+    
+    HealthcareApp.showNotification('Filters cleared', 'info');
+}
+
+/**
+ * Book appointment with specific doctor
+ */
+function bookWithDoctor(doctorName) {
+    HealthcareApp.showNotification(`Redirecting to book appointment with ${doctorName}...`, 'info');
+    
+    setTimeout(() => {
+        window.location.href = `/book-appointment?doctor=${encodeURIComponent(doctorName)}`;
+    }, 1500);
+}
+
+/**
+ * Call doctor
+ */
+function callDoctor(phone) {
+    if (!phone || phone === 'N/A') {
+        HealthcareApp.showNotification('Phone number not available', 'warning');
+        return;
+    }
+    
+    if (confirm(`Call ${phone}?`)) {
+        HealthcareApp.showNotification(`Calling ${phone}...`, 'info');
+        
+        // In a real app, this would initiate a phone call
+        setTimeout(() => {
+            alert(`SIMULATION: Calling ${phone}`);
+        }, 1000);
+    }
+}
+
+/**
+ * View doctor profile
+ */
+function viewDoctorProfile(doctorName) {
+    // Find doctor in our data
+    const doctor = allDoctors.find(d => d.name === doctorName) || 
+                   filteredDoctors.find(d => d.name === doctorName);
+    
+    if (!doctor) {
+        HealthcareApp.showNotification('Doctor profile not found', 'error');
+        return;
+    }
+    
+    currentDoctorProfile = doctor;
+    
+    // Populate modal
+    document.getElementById('modal-doctor-name').textContent = doctor.name;
+    
+    const profileContent = document.getElementById('doctor-profile-content');
+    profileContent.innerHTML = `
+        <div class="profile-section">
+            <h4>👨‍⚕️ Basic Information</h4>
+            <p><strong>Name:</strong> ${doctor.name}</p>
+            <p><strong>Specialization:</strong> ${doctor.specialization}</p>
+            <p><strong>Rating:</strong> ⭐ ${doctor.rating}/5.0</p>
+            <p><strong>Availability:</strong> ${doctor.availability}</p>
+        </div>
+        
+        <div class="profile-section">
+            <h4>📞 Contact Information</h4>
+            <p><strong>Phone:</strong> ${doctor.contact}</p>
+            ${doctor.email ? `<p><strong>Email:</strong> ${doctor.email}</p>` : ''}
+            ${doctor.location ? `<p><strong>Location:</strong> ${doctor.location}</p>` : ''}
+        </div>
+        
+        ${doctor.experience ? `
+        <div class="profile-section">
+            <h4>🎓 Experience</h4>
+            <p>${doctor.experience} years of medical practice</p>
+        </div>
+        ` : ''}
+        
+        ${doctor.education ? `
+        <div class="profile-section">
+            <h4>🏫 Education</h4>
+            <p>${doctor.education}</p>
+        </div>
+        ` : ''}
+        
+        ${doctor.languages ? `
+        <div class="profile-section">
+            <h4>🗣️ Languages</h4>
+            <p>${doctor.languages.join(', ')}</p>
+        </div>
+        ` : ''}
+    `;
+    
+    // Show modal
+    document.getElementById('doctor-profile-modal').classList.remove('hidden');
+}
+
+/**
+ * Close doctor profile modal
+ */
+function closeDoctorProfile() {
+    document.getElementById('doctor-profile-modal').classList.add('hidden');
+    currentDoctorProfile = null;
+}
+
+/**
+ * Book appointment from profile modal
+ */
+function bookFromProfile() {
+    if (currentDoctorProfile) {
+        closeDoctorProfile();
+        bookWithDoctor(currentDoctorProfile.name);
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('doctor-profile-modal');
+    if (event.target === modal) {
+        closeDoctorProfile();
+    }
+});
+
+// Enter key search
+document.getElementById('disease-search').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchDoctors();
+    }
+});
+</script>
+
+<style>
+/* Doctor Recommendations Specific Styles */
+
+.search-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.search-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.specialization-grid {
+    margin: 2rem 0;
+}
+
+.specialization-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.spec-card {
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid var(--border-color);
+}
+
+.spec-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+    border-color: var(--secondary-color);
+}
+
+.spec-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.spec-card h4 {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.spec-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+}
+
+.doctors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.doctor-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
+    transition: var(--transition);
+    overflow: hidden;
+}
+
+.doctor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.doctor-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-accent);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.doctor-avatar {
+    font-size: 2.5rem;
+}
+
+.doctor-info {
+    flex: 1;
+}
+
+.doctor-info h5 {
+    margin-bottom: 0.25rem;
+    color: var(--primary-color);
+}
+
+.doctor-specialization {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.availability-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.availability-badge.available {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.availability-badge.busy {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.doctor-details {
+    padding: 1rem;
+}
+
+.doctor-details p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.doctor-actions {
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.doctor-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.specialization-section {
+    margin-bottom: 3rem;
+}
+
+.specialization-section h4 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    color: var(--emergency-color);
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--bg-primary);
+    padding: 0;
+    border-radius: var(--border-radius);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: var(--shadow-heavy);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-accent);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    background: var(--bg-secondary);
+}
+
+.profile-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.profile-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.profile-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+}
+
+.profile-section p {
+    margin-bottom: 0.5rem;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
+    .search-form {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-actions {
+        flex-direction: column;
+    }
+    
+    .specialization-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .doctors-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .doctor-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .doctor-actions {
+        flex-direction: column;
+    }
+    
+    .results-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .specialization-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .spec-card {
+        padding: 1rem;
+    }
+    
+    .spec-icon {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}

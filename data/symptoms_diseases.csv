@@ -1,0 +1,79 @@
+symptom1,symptom2,symptom3,symptom4,symptom5,disease,severity,emergency
+fever,headache,cough,fatigue,sore_throat,Common Cold,Low,False
+fever,runny_nose,sneezing,body_aches,mild_headache,Common Cold,Low,False
+cough,congestion,sore_throat,fatigue,low_fever,Common Cold,Low,False
+chest_pain,shortness_of_breath,nausea,sweating,dizziness,Heart Attack,High,True
+severe_chest_pain,arm_pain,jaw_pain,cold_sweat,weakness,Heart Attack,High,True
+crushing_chest_pain,difficulty_breathing,nausea,lightheadedness,fatigue,Heart Attack,High,True
+severe_headache,neck_stiffness,fever,nausea,light_sensitivity,Meningitis,High,True
+high_fever,stiff_neck,confusion,rash,vomiting,Meningitis,High,True
+headache,fever,neck_pain,sensitivity_to_light,altered_mental_state,Meningitis,High,True
+cough,fever,shortness_of_breath,fatigue,chest_pain,Pneumonia,Medium,False
+productive_cough,high_fever,chills,difficulty_breathing,chest_discomfort,Pneumonia,Medium,False
+persistent_cough,fever,fatigue,shortness_of_breath,rapid_breathing,Pneumonia,Medium,False
+headache,fatigue,muscle_aches,fever,chills,Influenza,Medium,False
+body_aches,high_fever,cough,sore_throat,runny_nose,Influenza,Medium,False
+fever,chills,headache,muscle_pain,weakness,Influenza,Medium,False
+rash,itching,swelling,difficulty_breathing,hives,Allergic Reaction,Medium,True
+skin_rash,swelling,wheezing,difficulty_swallowing,rapid_pulse,Allergic Reaction,Medium,True
+hives,facial_swelling,shortness_of_breath,nausea,dizziness,Allergic Reaction,Medium,True
+joint_pain,stiffness,swelling,fatigue,morning_stiffness,Arthritis,Low,False
+joint_swelling,pain,reduced_mobility,stiffness,warmth,Arthritis,Low,False
+morning_stiffness,joint_pain,swelling,fatigue,limited_range_of_motion,Arthritis,Low,False
+frequent_urination,excessive_thirst,fatigue,blurred_vision,weight_loss,Diabetes,Medium,False
+increased_thirst,frequent_urination,unexplained_weight_loss,fatigue,slow_healing,Diabetes,Medium,False
+excessive_hunger,frequent_urination,fatigue,blurred_vision,tingling,Diabetes,Medium,False
+stomach_pain,diarrhea,nausea,vomiting,dehydration,Gastroenteritis,Medium,False
+nausea,vomiting,diarrhea,abdominal_cramps,fever,Gastroenteritis,Medium,False
+diarrhea,stomach_cramps,nausea,vomiting,weakness,Gastroenteritis,Medium,False
+shortness_of_breath,wheezing,chest_tightness,cough,difficulty_breathing,Asthma,Medium,True
+wheezing,cough,chest_tightness,shortness_of_breath,rapid_breathing,Asthma,Medium,True
+difficulty_breathing,cough,wheezing,chest_pain,fatigue,Asthma,Medium,True
+fatigue,weakness,pale_skin,shortness_of_breath,cold_hands,Anemia,Low,False
+weakness,fatigue,pale_skin,dizziness,cold_extremities,Anemia,Low,False
+tiredness,pale_complexion,weakness,shortness_of_breath,rapid_heartbeat,Anemia,Low,False
+high_blood_pressure,headache,dizziness,chest_pain,shortness_of_breath,Hypertension,Medium,False
+headache,dizziness,blurred_vision,chest_pain,fatigue,Hypertension,Medium,False
+dizziness,headache,nosebleeds,shortness_of_breath,chest_discomfort,Hypertension,Medium,False
+persistent_sadness,loss_of_interest,fatigue,sleep_problems,appetite_changes,Depression,Medium,False
+sadness,hopelessness,fatigue,sleep_disturbances,concentration_problems,Depression,Medium,False
+low_mood,loss_of_pleasure,fatigue,sleep_issues,appetite_loss,Depression,Medium,False
+excessive_worry,restlessness,fatigue,difficulty_concentrating,muscle_tension,Anxiety Disorder,Low,False
+worry,nervousness,restlessness,fatigue,irritability,Anxiety Disorder,Low,False
+anxiety,restlessness,muscle_tension,sleep_problems,concentration_difficulties,Anxiety Disorder,Low,False
+panic_attacks,fear_of_dying,rapid_heartbeat,sweating,trembling,Panic Disorder,Medium,True
+sudden_fear,rapid_heartbeat,sweating,trembling,shortness_of_breath,Panic Disorder,Medium,True
+intense_fear,palpitations,sweating,shaking,feeling_of_doom,Panic Disorder,Medium,True
+persistent_cough,shortness_of_breath,wheezing,chest_tightness,fatigue,Chronic Obstructive Pulmonary Disease,High,false
+dry_cough,fever,fatigue,loss_of_taste,loss_of_smell,COVID-19,Medium,false
+severe_cough,blood_in_sputum,chest_pain,weight_loss,night_sweats,Tuberculosis,High,false
+irregular_heartbeat,dizziness,fainting,chest_discomfort,fatigue,Arrhythmia,Medium,true
+leg_swelling,shortness_of_breath,fatigue,rapid_weight_gain,cough,Heart Failure,High,true
+sudden_severe_headache,vision_changes,weakness,speech_difficulty,confusion,Stroke,High,true
+severe_abdominal_pain,nausea,vomiting,fever,loss_of_appetite,Appendicitis,High,true
+burning_stomach_pain,nausea,bloating,heartburn,loss_of_appetite,Peptic Ulcer,Medium,false
+chronic_diarrhea,abdominal_pain,weight_loss,fatigue,blood_in_stool,Inflammatory Bowel Disease,Medium,false
+severe_headache,visual_disturbances,nausea,sensitivity_to_light,throbbing_pain,Migraine,Medium,false
+tremor,muscle_stiffness,slow_movement,balance_problems,speech_changes,Parkinson's Disease,Medium,false
+memory_loss,confusion,difficulty_concentrating,mood_changes,disorientation,Dementia,Medium,false
+weight_gain,fatigue,cold_intolerance,dry_skin,hair_loss,Hypothyroidism,Low,false
+weight_loss,rapid_heartbeat,sweating,nervousness,heat_intolerance,Hyperthyroidism,Medium,false
+extreme_fatigue,muscle_weakness,weight_loss,low_blood_pressure,skin_darkening,Addison's Disease,High,false
+high_fever,severe_headache,muscle_pain,rash,bleeding,Dengue Fever,High,true
+fever,chills,headache,muscle_aches,fatigue,Malaria,High,false
+sore_throat,fever,swollen_lymph_nodes,fatigue,rash,Mononucleosis,Medium,false
+lower_back_pain,leg_pain,numbness,tingling,muscle_weakness,Sciatica,Medium,false
+joint_pain,muscle_pain,fatigue,sleep_problems,tender_points,Fibromyalgia,Low,false
+bone_pain,fractures,height_loss,stooped_posture,back_pain,Osteoporosis,Medium,false
+red_scaly_patches,itching,dry_skin,cracking,bleeding,Eczema,Low,false
+red_patches,silvery_scales,itching,joint_pain,nail_changes,Psoriasis,Low,false
+new_mole,changing_mole,irregular_borders,color_variation,bleeding,Skin Cancer,High,false
+flank_pain,blood_in_urine,frequent_urination,nausea,fever,Kidney Stones,High,true
+burning_urination,frequent_urination,cloudy_urine,pelvic_pain,fever,Urinary Tract Infection,Medium,false
+swelling,high_blood_pressure,protein_in_urine,fatigue,decreased_urination,Kidney Disease,High,false
+eye_pain,blurred_vision,halos_around_lights,nausea,headache,Glaucoma,High,false
+sudden_vision_loss,eye_pain,headache,nausea,vomiting,Acute Angle-Closure Glaucoma,High,true
+gradual_vision_loss,difficulty_seeing_at_night,sensitivity_to_light,halos,double_vision,Cataracts,Low,false
+severe_allergic_reaction,difficulty_breathing,swelling,rapid_pulse,dizziness,Anaphylaxis,High,true
+severe_dehydration,dizziness,rapid_heartbeat,dry_mouth,confusion,Severe Dehydration,High,true
+high_fever,confusion,rapid_breathing,rapid_heartbeat,low_blood_pressure,Sepsis,High,true

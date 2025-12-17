@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+
+{% block title %}Symptom Checker - AI Healthcare Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🩺 Symptom Checker</h1>
+    <p>Enter your symptoms to get AI-powered disease predictions with confidence levels and severity assessment.</p>
+</div>
+
+<!-- Symptom Input Form -->
+<div class="form-container">
+    <form id="symptom-form" method="POST" action="/predict-disease">
+        <div class="form-group">
+            <label for="symptom-text" class="form-label">Describe Your Symptoms</label>
+            <textarea id="symptom-text" name="symptom_text" class="form-textarea" 
+                      placeholder="Describe your symptoms in detail (e.g., headache, fever, nausea, fatigue)..."></textarea>
+            <small class="form-help">Separate multiple symptoms with commas for better analysis.</small>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Common Symptoms (Select all that apply)</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="fever" name="symptoms" value="fever">
+                    <label for="fever">🌡️ Fever</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="headache" name="symptoms" value="headache">
+                    <label for="headache">🤕 Headache</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="cough" name="symptoms" value="cough">
+                    <label for="cough">😷 Cough</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="sore-throat" name="symptoms" value="sore throat">
+                    <label for="sore-throat">🗣️ Sore Throat</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="fatigue" name="symptoms" value="fatigue">
+                    <label for="fatigue">😴 Fatigue</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="nausea" name="symptoms" value="nausea">
+                    <label for="nausea">🤢 Nausea</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="chest-pain" name="symptoms" value="chest pain">
+                    <label for="chest-pain">💔 Chest Pain</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="shortness-breath" name="symptoms" value="shortness of breath">
+                    <label for="shortness-breath">🫁 Shortness of Breath</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="dizziness" name="symptoms" value="dizziness">
+                    <label for="dizziness">💫 Dizziness</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="stomach-pain" name="symptoms" value="stomach pain">
+                    <label for="stomach-pain">🤰 Stomach Pain</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="muscle-aches" name="symptoms" value="muscle aches">
+                    <label for="muscle-aches">💪 Muscle Aches</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="runny-nose" name="symptoms" value="runny nose">
+                    <label for="runny-nose">👃 Runny Nose</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="duration" class="form-label">How long have you had these symptoms?</label>
+            <select id="duration" name="duration" class="form-select">
+                <option value="">Select duration...</option>
+                <option value="less than 1 day">Less than 1 day</option>
+                <option value="1-2 days">1-2 days</option>
+                <option value="3-7 days">3-7 days</option>
+                <option value="1-2 weeks">1-2 weeks</option>
+                <option value="more than 2 weeks">More than 2 weeks</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="severity" class="form-label">How would you rate the severity?</label>
+            <select id="severity" name="severity" class="form-select">
+                <option value="">Select severity...</option>
+                <option value="mild">Mild - Manageable discomfort</option>
+                <option value="moderate">Moderate - Noticeable impact on daily activities</option>
+                <option value="severe">Severe - Significant impact, difficult to function</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full-width">
+            <span class="btn-text">Analyze Symptoms</span>
+            <span class="btn-loading hidden">
+                <span class="loading"></span> Analyzing...
+            </span>
+        </button>
+    </form>
+</div>
+
+<!-- Prediction Results Container -->
+<div id="prediction-results" class="results-container hidden">
+    <h3>🔬 Analysis Results</h3>
+    <div id="results-content">
+        <!-- Results will be populated by JavaScript -->
+    </div>
+    
+    <div class="results-actions">
+        <button onclick="checkEmergency()" class="btn btn-emergency">Check for Emergency</button>
+        <button onclick="findDoctors()" class="btn btn-primary">Find Doctors</button>
+        <button onclick="bookAppointment()" class="btn btn-secondary">Book Appointment</button>
+    </div>
+</div>
+
+<!-- Emergency Alert Container -->
+<div id="emergency-results" class="emergency-alert hidden">
+    <div class="alert-content">
+        <span class="alert-icon">🚨</span>
+        <div class="alert-text">
+            <strong>EMERGENCY DETECTED!</strong>
+            <p id="emergency-details">Based on your symptoms, you may need immediate medical attention.</p>
+        </div>
+        <div class="alert-actions">
+            <button onclick="callEmergency()" class="btn btn-emergency">Call Emergency Services</button>
+            <button onclick="findNearestHospital()" class="btn btn-primary">Find Nearest Hospital</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Symptom Checker JavaScript
+
+let currentPrediction = null;
+
+/**
+ * Handle symptom form submission
+ */
+document.getElementById('symptom-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const symptoms = formData.getAll('symptoms');
+    const symptomText = formData.get('symptom_text');
+    
+    // Validate input
+    if (symptoms.length === 0 && !symptomText.trim()) {
+        HealthcareApp.showNotification('Please enter or select at least one symptom', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+    
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    submitBtn.disabled = true;
+    
+    // Submit form data
+    fetch('/predict-disease', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayPredictionResults(data);
+            currentPrediction = data;
+            
+            // Automatically check for emergency
+            if (data.emergency || data.severity === 'High') {
+                setTimeout(() => checkEmergency(), 1000);
+            }
+        } else {
+            HealthcareApp.showNotification(data.message || 'Prediction failed', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Prediction error:', error);
+        HealthcareApp.showNotification('Analysis failed. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+        submitBtn.disabled = false;
+    });
+});
+
+/**
+ * Display prediction results
+ */
+function displayPredictionResults(data) {
+    const resultsContainer = document.getElementById('prediction-results');
+    const resultsContent = document.getElementById('results-content');
+    
+    let html = '';
+    
+    // Primary prediction
+    if (data.primary_prediction) {
+        const pred = data.primary_prediction;
+        const severityClass = `severity-${pred.severity.toLowerCase()}`;
+        
+        html += `
+            <div class="result-item ${severityClass}">
+                <h4>🎯 Primary Prediction</h4>
+                <p><strong>Disease:</strong> ${pred.disease}</p>
+                <p><strong>Confidence:</strong> ${(pred.confidence * 100).toFixed(1)}%</p>
+                <p><strong>Severity:</strong> ${pred.severity}</p>
+                ${pred.description ? `<p><strong>Description:</strong> ${pred.description}</p>` : ''}
+            </div>
+        `;
+    }
+    
+    // Alternative predictions
+    if (data.alternative_predictions && data.alternative_predictions.length > 0) {
+        html += '<h4>🔍 Alternative Possibilities</h4>';
+        data.alternative_predictions.forEach(pred => {
+            const severityClass = `severity-${pred.severity.toLowerCase()}`;
+            html += `
+                <div class="result-item ${severityClass}">
+                    <p><strong>${pred.disease}</strong> - ${(pred.confidence * 100).toFixed(1)}% confidence</p>
+                    <p><em>Severity: ${pred.severity}</em></p>
+                </div>
+            `;
+        });
+    }
+    
+    // Symptoms analyzed
+    if (data.symptoms_analyzed) {
+        html += `
+            <div class="result-item">
+                <h4>📋 Symptoms Analyzed</h4>
+                <p>${data.symptoms_analyzed.join(', ')}</p>
+            </div>
+        `;
+    }
+    
+    // Recommendations
+    if (data.recommendations) {
+        html += `
+            <div class="result-item">
+                <h4>💡 Recommendations</h4>
+                <ul>
+                    ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+    
+    // Emergency warning
+    if (data.emergency) {
+        html += `
+            <div class="result-item severity-high">
+                <h4>⚠️ Emergency Alert</h4>
+                <p><strong>This condition may require immediate medical attention!</strong></p>
+                <p>Please consider seeking emergency care or calling emergency services.</p>
+            </div>
+        `;
+    }
+    
+    resultsContent.innerHTML = html;
+    resultsContainer.classList.remove('hidden');
+    
+    // Scroll to results
+    resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    HealthcareApp.showNotification('Analysis complete!', 'success');
+}
+
+/**
+ * Check for emergency conditions
+ */
+function checkEmergency() {
+    if (!currentPrediction) {
+        HealthcareApp.showNotification('Please run symptom analysis first', 'warning');
+        return;
+    }
+    
+    const symptoms = currentPrediction.symptoms_analyzed || [];
+    
+    HealthcareApp.showNotification('Checking for emergency conditions...', 'info');
+    
+    fetch('/check-emergency', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            symptoms: symptoms,
+            prediction_result: currentPrediction
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.emergency) {
+            displayEmergencyAlert(data);
+        } else {
+            HealthcareApp.showNotification('No emergency detected. Continue with regular care.', 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Emergency check error:', error);
+        HealthcareApp.showNotification('Emergency check failed', 'error');
+    });
+}
+
+/**
+ * Display emergency alert
+ */
+function displayEmergencyAlert(data) {
+    const emergencyContainer = document.getElementById('emergency-results');
+    const emergencyDetails = document.getElementById('emergency-details');
+    
+    let alertText = 'Based on your symptoms, you may need immediate medical attention.';
+    
+    if (data.alerts && data.alerts.length > 0) {
+        alertText = data.alerts.join(' ');
+    }
+    
+    if (data.recommendations && data.recommendations.length > 0) {
+        alertText += ' Recommendations: ' + data.recommendations.join(', ');
+    }
+    
+    emergencyDetails.textContent = alertText;
+    emergencyContainer.classList.remove('hidden');
+    
+    // Scroll to emergency alert
+    emergencyContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    // Show emergency notification
+    HealthcareApp.showEmergencyAlert(alertText, data.emergency_contacts);
+}
+
+/**
+ * Find doctors for current condition
+ */
+function findDoctors() {
+    if (!currentPrediction || !currentPrediction.primary_prediction) {
+        HealthcareApp.showNotification('Please run symptom analysis first', 'warning');
+        return;
+    }
+    
+    const disease = currentPrediction.primary_prediction.disease;
+    window.location.href = `/doctors/${encodeURIComponent(disease)}`;
+}
+
+/**
+ * Book appointment
+ */
+function bookAppointment() {
+    window.location.href = '/book-appointment';
+}
+
+/**
+ * Call emergency services
+ */
+function callEmergency() {
+    if (confirm('This will simulate calling emergency services. In a real emergency, call 911 immediately.')) {
+        HealthcareApp.showNotification('Emergency services contacted. Help is on the way.', 'success');
+        
+        // Simulate emergency call
+        setTimeout(() => {
+            alert('SIMULATION: Emergency services have been notified of your location and condition.');
+        }, 2000);
+    }
+}
+
+/**
+ * Find nearest hospital
+ */
+function findNearestHospital() {
+    HealthcareApp.showNotification('Redirecting to GPS location services...', 'info');
+    setTimeout(() => {
+        window.location.href = '/get-location';
+    }, 1500);
+}
+
+// Auto-focus on symptom text area
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('symptom-text').focus();
+});
+</script>
+
+<style>
+/* Symptom Checker Specific Styles */
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--bg-accent), var(--bg-primary));
+    border-radius: var(--border-radius);
+}
+
+.form-help {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.checkbox-item:hover {
+    background-color: var(--bg-accent);
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.checkbox-item label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.btn-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.results-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.results-actions .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
+    .checkbox-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .results-actions {
+        flex-direction: column;
+    }
+    
+    .results-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

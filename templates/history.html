@@ -1,0 +1,1350 @@
+{% extends "base.html" %}
+
+{% block title %}Medical History - AI Healthcare Assistant{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>📋 Medical History</h1>
+    <p>Track your health journey with comprehensive medical records and insights.</p>
+    {% if data.user_id %}
+    <p class="text-secondary">Session ID: {{ data.user_id[:8] }}...</p>
+    {% endif %}
+</div>
+
+<!-- Navigation Tabs -->
+<div class="history-tabs">
+    <button class="tab-btn active" onclick="showTab('predictions')">Disease Predictions</button>
+    <button class="tab-btn" onclick="showTab('appointments')">Appointments</button>
+    <button class="tab-btn" onclick="showTab('emergencies')">Emergency Logs</button>
+    <button class="tab-btn" onclick="showTab('analytics')">Health Analytics</button>
+</div>
+
+<!-- Predictions History Tab -->
+<div id="predictions-tab" class="tab-content active">
+    <div class="results-container">
+        <div class="section-header">
+            <h3>Disease Prediction History</h3>
+            <div class="section-actions">
+                <button onclick="exportData('predictions')" class="btn btn-outline">Export Data</button>
+                <button onclick="generateHealthTips()" class="btn btn-primary">Get Health Tips</button>
+            </div>
+        </div>
+        
+        {% if data.predictions %}
+        <div class="history-grid">
+            {% for prediction in data.predictions %}
+            <div class="history-item prediction-item severity-{{ prediction.severity.lower() }}">
+                <div class="item-header">
+                    <h4>{{ prediction.predicted_disease }}</h4>
+                    <span class="severity-badge badge-{{ prediction.severity.lower() }}">{{ prediction.severity }}</span>
+                </div>
+                <div class="item-content">
+                    <p><strong>Symptoms:</strong> 
+                        {% if prediction.symptoms is string %}
+                            {{ prediction.symptoms }}
+                        {% else %}
+                            {{ prediction.symptoms|join(', ') }}
+                        {% endif %}
+                    </p>
+                    <p><strong>Confidence:</strong> {{ "%.1f"|format(prediction.confidence * 100) }}%</p>
+                    {% if prediction.emergency %}
+                    <p class="emergency-indicator">🚨 Emergency Detected</p>
+                    {% endif %}
+                </div>
+                <div class="item-footer">
+                    <span class="timestamp">{{ prediction.timestamp }}</span>
+                    <button onclick="showPredictionDetails({{ prediction.id }})" class="btn btn-ghost">View Details</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">🔍</span>
+            <h4>No Predictions Yet</h4>
+            <p>Start by using the symptom checker to build your medical history.</p>
+            <a href="{{ url_for('symptom_checker') }}" class="btn btn-primary">Check Symptoms</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Appointments History Tab -->
+<div id="appointments-tab" class="tab-content">
+    <div class="results-container">
+        <div class="section-header">
+            <h3>Appointment History</h3>
+            <div class="section-actions">
+                <button onclick="exportData('appointments')" class="btn btn-outline">Export Data</button>
+            </div>
+        </div>
+        
+        {% if data.appointments %}
+        <div class="history-grid">
+            {% for appointment in data.appointments %}
+            <div class="history-item appointment-item status-{{ appointment.status }}">
+                <div class="item-header">
+                    <h4>Dr. {{ appointment.doctor_name }}</h4>
+                    <span class="status-badge badge-{{ appointment.status }}">{{ appointment.status|title }}</span>
+                </div>
+                <div class="item-content">
+                    {% if appointment.doctor_specialization %}
+                    <p><strong>Specialization:</strong> {{ appointment.doctor_specialization }}</p>
+                    {% endif %}
+                    <p><strong>Date & Time:</strong> {{ appointment.appointment_date }} at {{ appointment.appointment_time }}</p>
+                    {% if appointment.appointment_type %}
+                    <p><strong>Type:</strong> {{ appointment.appointment_type|title }}</p>
+                    {% endif %}
+                    {% if appointment.symptoms %}
+                    <p><strong>Symptoms:</strong> {{ appointment.symptoms }}</p>
+                    {% endif %}
+                    {% if appointment.notes %}
+                    <p><strong>Notes:</strong> {{ appointment.notes }}</p>
+                    {% endif %}
+                </div>
+                <div class="item-footer">
+                    <span class="timestamp">Booked: {{ appointment.created_at }}</span>
+                    {% if appointment.confirmation_code %}
+                    <span class="confirmation-code">Code: {{ appointment.confirmation_code }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">📅</span>
+            <h4>No Appointments Yet</h4>
+            <p>Book your first appointment with a recommended doctor.</p>
+            <a href="{{ url_for('book_appointment') }}" class="btn btn-primary">Book Appointment</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Emergency Logs Tab -->
+<div id="emergencies-tab" class="tab-content">
+    <div class="results-container">
+        <div class="section-header">
+            <h3>Emergency Event Logs</h3>
+            <div class="section-actions">
+                <button onclick="exportData('emergencies')" class="btn btn-outline">Export Data</button>
+            </div>
+        </div>
+        
+        {% if data.emergency_logs %}
+        <div class="history-grid">
+            {% for emergency in data.emergency_logs %}
+            <div class="history-item emergency-item severity-{{ emergency.severity_level.lower() }}">
+                <div class="item-header">
+                    <h4>🚨 {{ emergency.emergency_type }}</h4>
+                    <span class="severity-badge badge-emergency">{{ emergency.severity_level }}</span>
+                </div>
+                <div class="item-content">
+                    <p><strong>Symptoms:</strong> 
+                        {% if emergency.symptoms is string %}
+                            {{ emergency.symptoms }}
+                        {% else %}
+                            {{ emergency.symptoms|join(', ') }}
+                        {% endif %}
+                    </p>
+                    {% if emergency.location_lat and emergency.location_lng %}
+                    <p><strong>Location:</strong> {{ "%.4f"|format(emergency.location_lat) }}, {{ "%.4f"|format(emergency.location_lng) }}</p>
+                    {% endif %}
+                    {% if emergency.ambulance_called %}
+                    <p class="ambulance-called">🚑 Ambulance Called</p>
+                    {% endif %}
+                </div>
+                <div class="item-footer">
+                    <span class="timestamp">{{ emergency.timestamp }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">🚨</span>
+            <h4>No Emergency Events</h4>
+            <p>Fortunately, no emergency situations have been detected.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Health Analytics Tab -->
+<div id="analytics-tab" class="tab-content">
+    <div class="results-container">
+        <div class="section-header">
+            <h3>Health Analytics & Insights</h3>
+        </div>
+        
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <h4>Prediction Summary</h4>
+                <div id="prediction-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="total-predictions">{{ data.predictions|length }}</span>
+                        <span class="stat-label">Total Predictions</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="emergency-count">
+                            {% set emergency_count = data.predictions|selectattr('emergency')|list|length %}
+                            {{ emergency_count }}
+                        </span>
+                        <span class="stat-label">Emergency Cases</span>
+                    </div>
+                    {% if data.summary.prediction_stats %}
+                    <div class="stat-item">
+                        <span class="stat-number">{{ "%.1f"|format(data.summary.prediction_stats.average_confidence * 100) }}%</span>
+                        <span class="stat-label">Avg Confidence</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="analytics-card">
+                <h4>Appointment Summary</h4>
+                <div id="appointment-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="total-appointments">{{ data.appointments|length }}</span>
+                        <span class="stat-label">Total Appointments</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="completed-appointments">
+                            {% set completed_count = data.appointments|selectattr('status', 'equalto', 'completed')|list|length %}
+                            {{ completed_count }}
+                        </span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                    {% if data.summary.appointment_stats %}
+                    <div class="stat-item">
+                        <span class="stat-number">{{ data.summary.appointment_stats.cancelled_appointments or 0 }}</span>
+                        <span class="stat-label">Cancelled</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="analytics-card">
+                <h4>Health Insights</h4>
+                <div id="health-insights">
+                    {% if data.summary.health_trends %}
+                    <div class="stat-item">
+                        <span class="stat-number">{{ data.summary.health_trends.recent_activity.predictions_last_30_days or 0 }}</span>
+                        <span class="stat-label">Recent Predictions</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ data.summary.health_trends.recent_activity.emergencies_last_30_days or 0 }}</span>
+                        <span class="stat-label">Recent Emergencies</span>
+                    </div>
+                    {% else %}
+                    <div class="stat-item">
+                        <span class="stat-number">{{ data.emergency_logs|length }}</span>
+                        <span class="stat-label">Total Emergencies</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ data.location_logs|length }}</span>
+                        <span class="stat-label">Location Records</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if data.summary.prediction_stats and data.summary.prediction_stats.most_common_diseases %}
+            <div class="analytics-card">
+                <h4>Common Conditions</h4>
+                <div class="condition-list">
+                    {% for disease, count in data.summary.prediction_stats.most_common_diseases.items() %}
+                    {% if loop.index <= 3 %}
+                    <div class="condition-item">
+                        <span class="condition-name">{{ disease }}</span>
+                        <span class="condition-count">{{ count }}</span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Health Tips Section -->
+        <div class="health-tips-section">
+            <h4>Personalized Health Tips</h4>
+            <div id="health-tips-container">
+                <p>Click "Generate Health Tips" to get personalized recommendations based on your medical history.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Health Tips Modal -->
+<div id="health-tips-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>💡 Personalized Health Tips</h3>
+            <button onclick="hideHealthTips()" class="btn btn-secondary">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="health-tips-content">
+                <div class="loading-container">
+                    <span class="loading"></span> Generating personalized health tips...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prediction Details Modal -->
+<div id="prediction-details-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Prediction Details</h3>
+            <button onclick="hidePredictionDetails()" class="btn btn-secondary">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="prediction-details-content">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Medical History JavaScript
+
+/**
+ * Show specific tab content
+ */
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const selectedTab = document.getElementById(tabName + '-tab');
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+    }
+    
+    // Add active class to clicked button
+    event.target.classList.add('active');
+    
+    // Load analytics data when switching to analytics tab
+    if (tabName === 'analytics') {
+        setTimeout(() => {
+            loadHealthAnalytics();
+        }, 100);
+    }
+}
+
+/**
+ * Export medical data using analytics API
+ */
+function exportData(dataType) {
+    HealthcareApp.showNotification(`Exporting ${dataType} data...`, 'info');
+    
+    // Show export options modal
+    showExportModal(dataType);
+}
+
+/**
+ * Show export options modal
+ */
+function showExportModal(dataType) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export ${dataType} Data</h3>
+                <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <h4>Select Format:</h4>
+                    <div class="format-options">
+                        <label><input type="radio" name="format" value="json" checked> JSON (structured data)</label>
+                        <label><input type="radio" name="format" value="csv"> CSV (spreadsheet)</label>
+                        <label><input type="radio" name="format" value="txt"> Text (readable report)</label>
+                    </div>
+                    
+                    <h4>Include Categories:</h4>
+                    <div class="category-options">
+                        <label><input type="checkbox" name="category" value="predictions" checked> Disease Predictions</label>
+                        <label><input type="checkbox" name="category" value="appointments" checked> Appointments</label>
+                        <label><input type="checkbox" name="category" value="emergency_logs" checked> Emergency Logs</label>
+                        <label><input type="checkbox" name="category" value="summary" checked> Summary Statistics</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Cancel</button>
+                <button onclick="performExport(this)" class="btn btn-primary">Export Data</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+/**
+ * Perform actual data export
+ */
+async function performExport(button) {
+    try {
+        const modal = button.closest('.modal');
+        const format = modal.querySelector('input[name="format"]:checked').value;
+        const categories = Array.from(modal.querySelectorAll('input[name="category"]:checked'))
+            .map(cb => cb.value);
+        
+        // Show loading
+        button.textContent = 'Exporting...';
+        button.disabled = true;
+        
+        // Call export API
+        const response = await fetch('/analytics/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                format: format,
+                categories: categories
+            })
+        });
+        
+        if (response.ok) {
+            if (format === 'json') {
+                // Handle JSON response
+                const data = await response.json();
+                if (data.success) {
+                    downloadAsJSON(data.data, `medical_history_${new Date().toISOString().split('T')[0]}.json`);
+                    HealthcareApp.showNotification('Data exported successfully!', 'success');
+                } else {
+                    throw new Error(data.message || 'Export failed');
+                }
+            } else {
+                // Handle file download for CSV/TXT
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `medical_history_${new Date().toISOString().split('T')[0]}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                HealthcareApp.showNotification('Data exported successfully!', 'success');
+            }
+        } else {
+            throw new Error('Export request failed');
+        }
+        
+        modal.remove();
+        
+    } catch (error) {
+        console.error('Export failed:', error);
+        HealthcareApp.showNotification(`Export failed: ${error.message}`, 'error');
+        button.textContent = 'Export Data';
+        button.disabled = false;
+    }
+}
+
+/**
+ * Gather data for export
+ */
+function gatherDataForExport(dataType) {
+    const exportData = {
+        type: dataType,
+        exportDate: new Date().toISOString(),
+        data: []
+    };
+    
+    // Gather data based on type
+    const items = document.querySelectorAll(`#${dataType}-tab .history-item`);
+    items.forEach(item => {
+        const itemData = {
+            title: item.querySelector('h4')?.textContent || '',
+            content: item.querySelector('.item-content')?.textContent || '',
+            timestamp: item.querySelector('.timestamp')?.textContent || ''
+        };
+        exportData.data.push(itemData);
+    });
+    
+    return exportData;
+}
+
+/**
+ * Download data as JSON file
+ */
+function downloadAsJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * Generate personalized health tips
+ */
+function generateHealthTips() {
+    const modal = document.getElementById('health-tips-modal');
+    const content = document.getElementById('health-tips-content');
+    
+    // Show modal with loading
+    modal.classList.remove('hidden');
+    content.innerHTML = '<div class="loading-container"><span class="loading"></span> Analyzing your medical history...</div>';
+    
+    // Simulate AI analysis
+    setTimeout(() => {
+        const tips = generatePersonalizedTips();
+        displayHealthTips(tips);
+    }, 2000);
+}
+
+/**
+ * Generate personalized tips based on medical history
+ */
+function generatePersonalizedTips() {
+    const predictions = document.querySelectorAll('#predictions-tab .prediction-item');
+    const appointments = document.querySelectorAll('#appointments-tab .appointment-item');
+    
+    const tips = [];
+    
+    // General health tips
+    tips.push({
+        category: 'General Health',
+        icon: '🌟',
+        tip: 'Maintain a balanced diet rich in fruits, vegetables, and whole grains to support your immune system.',
+        priority: 'medium'
+    });
+    
+    tips.push({
+        category: 'Preventive Care',
+        icon: '🛡️',
+        tip: 'Schedule regular check-ups with your healthcare provider to catch potential issues early.',
+        priority: 'high'
+    });
+    
+    // Analyze predictions for specific tips
+    if (predictions.length > 0) {
+        tips.push({
+            category: 'Symptom Management',
+            icon: '💊',
+            tip: 'Keep a symptom diary to track patterns and triggers for better health management.',
+            priority: 'medium'
+        });
+        
+        // Check for emergency patterns
+        const emergencyItems = document.querySelectorAll('.emergency-indicator');
+        if (emergencyItems.length > 0) {
+            tips.push({
+                category: 'Emergency Preparedness',
+                icon: '🚨',
+                tip: 'Create an emergency contact list and keep it easily accessible. Consider wearing a medical alert bracelet.',
+                priority: 'high'
+            });
+        }
+    }
+    
+    // Analyze appointments for follow-up tips
+    if (appointments.length > 0) {
+        tips.push({
+            category: 'Appointment Management',
+            icon: '📅',
+            tip: 'Prepare questions before appointments and bring a list of current medications.',
+            priority: 'medium'
+        });
+    }
+    
+    // Lifestyle tips
+    tips.push({
+        category: 'Lifestyle',
+        icon: '🏃‍♂️',
+        tip: 'Aim for at least 30 minutes of moderate exercise most days of the week.',
+        priority: 'medium'
+    });
+    
+    tips.push({
+        category: 'Mental Health',
+        icon: '🧘‍♀️',
+        tip: 'Practice stress management techniques like deep breathing, meditation, or yoga.',
+        priority: 'medium'
+    });
+    
+    tips.push({
+        category: 'Sleep Health',
+        icon: '😴',
+        tip: 'Maintain a consistent sleep schedule and aim for 7-9 hours of quality sleep per night.',
+        priority: 'medium'
+    });
+    
+    return tips;
+}
+
+/**
+ * Display health tips in modal
+ */
+function displayHealthTips(tips) {
+    const content = document.getElementById('health-tips-content');
+    
+    let html = '<div class="health-tips-list">';
+    
+    // Sort tips by priority
+    const sortedTips = tips.sort((a, b) => {
+        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+        return priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
+    
+    sortedTips.forEach(tip => {
+        html += `
+            <div class="health-tip-item priority-${tip.priority}">
+                <div class="tip-header">
+                    <span class="tip-icon">${tip.icon}</span>
+                    <h5>${tip.category}</h5>
+                    <span class="priority-badge badge-${tip.priority}">${tip.priority}</span>
+                </div>
+                <p class="tip-content">${tip.tip}</p>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    html += '<div class="tips-footer"><p><em>These tips are for informational purposes only. Always consult with healthcare professionals for personalized medical advice.</em></p></div>';
+    
+    content.innerHTML = html;
+    
+    // Update health tips container on analytics tab
+    const tipsContainer = document.getElementById('health-tips-container');
+    if (tipsContainer) {
+        tipsContainer.innerHTML = `<p>Generated ${tips.length} personalized health tips. <button onclick="generateHealthTips()" class="btn btn-primary">View Tips</button></p>`;
+    }
+}
+
+/**
+ * Hide health tips modal
+ */
+function hideHealthTips() {
+    const modal = document.getElementById('health-tips-modal');
+    modal.classList.add('hidden');
+}
+
+/**
+ * Show prediction details
+ */
+function showPredictionDetails(predictionId) {
+    const modal = document.getElementById('prediction-details-modal');
+    const content = document.getElementById('prediction-details-content');
+    
+    // Show modal with loading
+    modal.classList.remove('hidden');
+    content.innerHTML = '<div class="loading-container"><span class="loading"></span> Loading prediction details...</div>';
+    
+    // Simulate loading prediction details
+    setTimeout(() => {
+        const details = `
+            <div class="prediction-details">
+                <h4>Prediction ID: ${predictionId}</h4>
+                <p>Detailed analysis and recommendations would be displayed here.</p>
+                <div class="detail-section">
+                    <h5>Confidence Breakdown</h5>
+                    <p>This section would show detailed confidence metrics and analysis.</p>
+                </div>
+                <div class="detail-section">
+                    <h5>Related Information</h5>
+                    <p>Links to relevant health information and resources.</p>
+                </div>
+            </div>
+        `;
+        content.innerHTML = details;
+    }, 1000);
+}
+
+/**
+ * Hide prediction details modal
+ */
+function hidePredictionDetails() {
+    const modal = document.getElementById('prediction-details-modal');
+    modal.classList.add('hidden');
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Load analytics if on analytics tab
+    if (document.getElementById('analytics-tab').classList.contains('active')) {
+        loadHealthAnalytics();
+    }
+    
+    // Add analytics loading when switching to analytics tab
+    const analyticsTabBtn = document.querySelector('.tab-btn[onclick*="analytics"]');
+    if (analyticsTabBtn) {
+        analyticsTabBtn.addEventListener('click', function() {
+            setTimeout(() => {
+                loadHealthAnalytics();
+            }, 100);
+        });
+    }
+});
+
+/**
+ * Load enhanced health analytics
+ */
+async function loadHealthAnalytics() {
+    try {
+        HealthcareApp.showNotification('Loading analytics...', 'info');
+        
+        // Load user analytics
+        const response = await fetch('/analytics/user-history?include_summary=true');
+        const data = await response.json();
+        
+        if (data.success) {
+            updateAnalyticsDisplay(data.history);
+            HealthcareApp.showNotification('Analytics loaded successfully!', 'success');
+        } else {
+            throw new Error(data.message || 'Failed to load analytics');
+        }
+        
+    } catch (error) {
+        console.error('Analytics loading failed:', error);
+        HealthcareApp.showNotification(`Analytics loading failed: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Update analytics display with fresh data
+ */
+function updateAnalyticsDisplay(historyData) {
+    const summary = historyData.summary || {};
+    
+    // Update prediction stats
+    if (summary.prediction_stats) {
+        const stats = summary.prediction_stats;
+        document.getElementById('total-predictions').textContent = summary.total_predictions || 0;
+        document.getElementById('emergency-count').textContent = stats.emergency_predictions || 0;
+        
+        // Update average confidence if element exists
+        const avgConfidenceEl = document.querySelector('#prediction-stats .stat-number:nth-child(3)');
+        if (avgConfidenceEl && stats.average_confidence) {
+            avgConfidenceEl.textContent = `${(stats.average_confidence * 100).toFixed(1)}%`;
+        }
+    }
+    
+    // Update appointment stats
+    if (summary.appointment_stats) {
+        const stats = summary.appointment_stats;
+        document.getElementById('total-appointments').textContent = summary.total_appointments || 0;
+        document.getElementById('completed-appointments').textContent = stats.completed_appointments || 0;
+    }
+    
+    // Update health trends
+    if (summary.health_trends && summary.health_trends.recent_activity) {
+        const trends = summary.health_trends.recent_activity;
+        
+        // Update recent activity numbers
+        const recentPredictionsEl = document.querySelector('#health-insights .stat-number:first-child');
+        if (recentPredictionsEl) {
+            recentPredictionsEl.textContent = trends.predictions_last_30_days || 0;
+        }
+        
+        const recentEmergenciesEl = document.querySelector('#health-insights .stat-number:nth-child(2)');
+        if (recentEmergenciesEl) {
+            recentEmergenciesEl.textContent = trends.emergencies_last_30_days || 0;
+        }
+    }
+    
+    // Update common conditions if available
+    if (summary.prediction_stats && summary.prediction_stats.most_common_diseases) {
+        updateCommonConditions(summary.prediction_stats.most_common_diseases);
+    }
+}
+
+/**
+ * Update common conditions display
+ */
+function updateCommonConditions(diseases) {
+    const conditionList = document.querySelector('.condition-list');
+    if (!conditionList) return;
+    
+    conditionList.innerHTML = '';
+    
+    const topDiseases = Object.entries(diseases).slice(0, 3);
+    topDiseases.forEach(([disease, count]) => {
+        const conditionItem = document.createElement('div');
+        conditionItem.className = 'condition-item';
+        conditionItem.innerHTML = `
+            <span class="condition-name">${disease}</span>
+            <span class="condition-count">${count}</span>
+        `;
+        conditionList.appendChild(conditionItem);
+    });
+}
+
+/**
+ * Load system analytics (for admin view)
+ */
+async function loadSystemAnalytics() {
+    try {
+        const response = await fetch('/analytics/system');
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('System Analytics:', data.analytics);
+            // Could display system-wide statistics here
+        }
+        
+    } catch (error) {
+        console.error('System analytics loading failed:', error);
+    }
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(event) {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        if (event.target === modal) {
+            modal.classList.add('hidden');
+        }
+    });
+});
+</script>
+
+<style>
+/* Medical History Specific Styles */
+
+.history-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0;
+}
+
+.tab-btn {
+    padding: 1rem 2rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition);
+}
+
+.tab-btn:hover {
+    color: var(--primary-color);
+    background: var(--bg-accent);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    background: var(--bg-accent);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.history-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+.history-item {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    border-left: 5px solid var(--secondary-color);
+    transition: var(--transition);
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.history-item.severity-low {
+    border-left-color: var(--success-color);
+}
+
+.history-item.severity-medium {
+    border-left-color: var(--warning-color);
+}
+
+.history-item.severity-high {
+    border-left-color: var(--emergency-color);
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.item-header h4 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.severity-badge,
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--border-radius-xl);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-low {
+    background: var(--success-color);
+    color: var(--text-light);
+}
+
+.badge-medium {
+    background: var(--warning-color);
+    color: var(--text-light);
+}
+
+.badge-high,
+.badge-emergency {
+    background: var(--emergency-color);
+    color: var(--text-light);
+}
+
+.badge-scheduled {
+    background: var(--info-color);
+    color: var(--text-light);
+}
+
+.badge-confirmed {
+    background: var(--success-color);
+    color: var(--text-light);
+}
+
+.badge-cancelled {
+    background: var(--text-secondary);
+    color: var(--text-light);
+}
+
+.badge-completed {
+    background: var(--primary-color);
+    color: var(--text-light);
+}
+
+.item-content {
+    margin-bottom: 1rem;
+}
+
+.item-content p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.emergency-indicator {
+    color: var(--emergency-color);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ambulance-called {
+    color: var(--emergency-color);
+    font-weight: 600;
+}
+
+.confirmation-code {
+    font-family: var(--font-family-mono);
+    background: var(--bg-accent);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.analytics-card {
+    background: var(--bg-primary);
+    padding: 2rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.analytics-card h4 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.health-tips-section {
+    background: var(--bg-accent);
+    padding: 2rem;
+    border-radius: var(--border-radius-lg);
+    margin-top: 2rem;
+}
+
+.health-tips-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.health-tip-item {
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--secondary-color);
+}
+
+.health-tip-item.priority-high {
+    border-left-color: var(--emergency-color);
+}
+
+.health-tip-item.priority-medium {
+    border-left-color: var(--warning-color);
+}
+
+.health-tip-item.priority-low {
+    border-left-color: var(--success-color);
+}
+
+.tip-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.tip-icon {
+    font-size: 1.5rem;
+}
+
+.tip-header h5 {
+    margin: 0;
+    flex: 1;
+}
+
+.priority-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.badge-high {
+    background: var(--emergency-color);
+    color: var(--text-light);
+}
+
+.badge-medium {
+    background: var(--warning-color);
+    color: var(--text-light);
+}
+
+.badge-low {
+    background: var(--success-color);
+    color: var(--text-light);
+}
+
+.tip-content {
+    margin: 0;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.tips-footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.tips-footer em {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Enhanced Analytics Styles */
+.condition-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.condition-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--bg-accent);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+}
+
+.condition-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.condition-count {
+    background: var(--primary-color);
+    color: var(--text-light);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--border-radius-xl);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Export Modal Styles */
+.export-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.format-options,
+.category-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.format-options label,
+.category-options label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.format-options label:hover,
+.category-options label:hover {
+    background: var(--bg-accent);
+}
+
+.format-options input,
+.category-options input {
+    margin: 0;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Enhanced Analytics Grid */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.analytics-card {
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.analytics-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.analytics-card h4 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+#prediction-stats,
+#appointment-stats,
+#health-insights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 1rem;
+}
+
+/* Loading States */
+.loading-analytics {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.loading-analytics::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Enhanced Responsive Design */
+@media (max-width: 768px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .analytics-card {
+        padding: 1rem;
+    }
+    
+    #prediction-stats,
+    #appointment-stats,
+    #health-insights {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+    
+    .export-options {
+        gap: 1rem;
+    }
+    
+    .modal-content {
+        margin: 1rem;
+        max-width: calc(100vw - 2rem);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .history-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .section-actions {
+        justify-content: center;
+    }
+    
+    .history-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .item-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

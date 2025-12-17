@@ -1,0 +1,638 @@
+{% extends "base.html" %}
+
+{% block title %}GPS Location - AI Healthcare Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📍 GPS Location Services</h1>
+    <p>Track your location and find nearby hospitals, clinics, and emergency services in your area.</p>
+</div>
+
+<!-- Location Status Card -->
+<div class="form-container">
+    <div class="location-status">
+        <h3>🗺️ Current Location Status</h3>
+        <div id="location-info" class="location-display">
+            <p id="location-status">Click "Get My Location" to enable GPS tracking</p>
+            <div id="coordinates-display" class="hidden">
+                <p><strong>Latitude:</strong> <span id="latitude-value">--</span></p>
+                <p><strong>Longitude:</strong> <span id="longitude-value">--</span></p>
+                <p><strong>Accuracy:</strong> <span id="accuracy-value">--</span></p>
+                <p><strong>Last Updated:</strong> <span id="timestamp-value">--</span></p>
+            </div>
+        </div>
+        
+        <div class="location-actions">
+            <button id="get-location-btn" onclick="getCurrentLocation()" class="btn btn-primary">
+                <span class="btn-text">📍 Get My Location</span>
+                <span class="btn-loading hidden">
+                    <span class="loading"></span> Getting location...
+                </span>
+            </button>
+            <button id="refresh-location-btn" onclick="refreshLocation()" class="btn btn-secondary hidden">
+                🔄 Refresh Location
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Nearby Facilities -->
+<div id="facilities-container" class="results-container hidden">
+    <h3>🏥 Nearby Medical Facilities</h3>
+    
+    <!-- Hospitals Section -->
+    <div class="facility-section">
+        <h4>🏥 Hospitals</h4>
+        <div id="hospitals-list" class="facility-list">
+            <!-- Hospitals will be populated by JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Emergency Services Section -->
+    <div class="facility-section">
+        <h4>🚑 Emergency Services</h4>
+        <div id="emergency-services" class="facility-list">
+            <!-- Emergency services will be populated by JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Clinics Section -->
+    <div class="facility-section">
+        <h4>🏪 Clinics & Urgent Care</h4>
+        <div id="clinics-list" class="facility-list">
+            <!-- Clinics will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Contact Card -->
+<div class="emergency-contact-card">
+    <h3>🚨 Emergency Contacts</h3>
+    <div class="emergency-contacts">
+        <div class="contact-item">
+            <span class="contact-icon">🚑</span>
+            <div class="contact-info">
+                <strong>Emergency Services</strong>
+                <p>Call: 911</p>
+            </div>
+            <button onclick="callEmergency('911')" class="btn btn-emergency">Call Now</button>
+        </div>
+        
+        <div class="contact-item">
+            <span class="contact-icon">🏥</span>
+            <div class="contact-info">
+                <strong>Poison Control</strong>
+                <p>Call: 1-800-222-1222</p>
+            </div>
+            <button onclick="callEmergency('poison')" class="btn btn-secondary">Call Now</button>
+        </div>
+        
+        <div class="contact-item">
+            <span class="contact-icon">🧠</span>
+            <div class="contact-info">
+                <strong>Mental Health Crisis</strong>
+                <p>Call: 988</p>
+            </div>
+            <button onclick="callEmergency('mental-health')" class="btn btn-secondary">Call Now</button>
+        </div>
+    </div>
+</div>
+
+<!-- Location Sharing -->
+<div class="form-container">
+    <h3>📤 Share Location</h3>
+    <p>Share your current location with emergency contacts or healthcare providers.</p>
+    
+    <div class="share-options">
+        <button onclick="shareLocation('sms')" class="btn btn-primary">📱 Share via SMS</button>
+        <button onclick="shareLocation('email')" class="btn btn-secondary">📧 Share via Email</button>
+        <button onclick="copyLocationLink()" class="btn btn-secondary">📋 Copy Location Link</button>
+    </div>
+    
+    <div id="location-link" class="location-link hidden">
+        <label for="location-url" class="form-label">Location Link:</label>
+        <input type="text" id="location-url" class="form-input" readonly>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// GPS Location JavaScript
+
+let currentLocation = null;
+let watchId = null;
+
+/**
+ * Get current GPS location
+ */
+function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        HealthcareApp.showNotification('Geolocation is not supported by this browser', 'error');
+        return;
+    }
+    
+    const getLocationBtn = document.getElementById('get-location-btn');
+    const btnText = getLocationBtn.querySelector('.btn-text');
+    const btnLoading = getLocationBtn.querySelector('.btn-loading');
+    
+    // Show loading state
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
+    getLocationBtn.disabled = true;
+    
+    const options = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000 // 1 minute
+    };
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            handleLocationSuccess(position);
+            
+            // Reset button state
+            btnText.classList.remove('hidden');
+            btnLoading.classList.add('hidden');
+            getLocationBtn.disabled = false;
+        },
+        function(error) {
+            handleLocationError(error);
+            
+            // Reset button state
+            btnText.classList.remove('hidden');
+            btnLoading.classList.add('hidden');
+            getLocationBtn.disabled = false;
+        },
+        options
+    );
+}
+
+/**
+ * Handle successful location retrieval
+ */
+function handleLocationSuccess(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    const accuracy = position.coords.accuracy;
+    
+    currentLocation = {
+        latitude: latitude,
+        longitude: longitude,
+        accuracy: accuracy,
+        timestamp: new Date()
+    };
+    
+    // Update UI
+    updateLocationDisplay(currentLocation);
+    
+    // Send location to server
+    sendLocationToServer(latitude, longitude);
+    
+    // Show refresh button
+    document.getElementById('refresh-location-btn').classList.remove('hidden');
+    
+    HealthcareApp.showNotification('Location retrieved successfully!', 'success');
+}
+
+/**
+ * Handle location retrieval errors
+ */
+function handleLocationError(error) {
+    let message = 'Location access failed';
+    
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            message = 'Location access denied by user. Please enable location services.';
+            break;
+        case error.POSITION_UNAVAILABLE:
+            message = 'Location information is unavailable.';
+            break;
+        case error.TIMEOUT:
+            message = 'Location request timed out. Please try again.';
+            break;
+    }
+    
+    document.getElementById('location-status').textContent = message;
+    HealthcareApp.showNotification(message, 'error');
+}
+
+/**
+ * Update location display in UI
+ */
+function updateLocationDisplay(location) {
+    document.getElementById('location-status').textContent = 'Location retrieved successfully!';
+    document.getElementById('latitude-value').textContent = location.latitude.toFixed(6);
+    document.getElementById('longitude-value').textContent = location.longitude.toFixed(6);
+    document.getElementById('accuracy-value').textContent = `±${Math.round(location.accuracy)}m`;
+    document.getElementById('timestamp-value').textContent = location.timestamp.toLocaleString();
+    
+    document.getElementById('coordinates-display').classList.remove('hidden');
+}
+
+/**
+ * Send location data to server
+ */
+function sendLocationToServer(latitude, longitude) {
+    fetch('/get-location', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            latitude: latitude,
+            longitude: longitude
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayNearbyFacilities(data);
+        } else {
+            HealthcareApp.showNotification(data.message || 'Failed to process location', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Location processing error:', error);
+        HealthcareApp.showNotification('Failed to process location data', 'error');
+    });
+}
+
+/**
+ * Display nearby medical facilities
+ */
+function displayNearbyFacilities(data) {
+    const facilitiesContainer = document.getElementById('facilities-container');
+    
+    // Display hospitals
+    if (data.nearby_hospitals && data.nearby_hospitals.length > 0) {
+        const hospitalsList = document.getElementById('hospitals-list');
+        hospitalsList.innerHTML = '';
+        
+        data.nearby_hospitals.forEach(hospital => {
+            const hospitalItem = createFacilityItem(hospital, 'hospital');
+            hospitalsList.appendChild(hospitalItem);
+        });
+    }
+    
+    // Display emergency services
+    if (data.ambulance_info) {
+        const emergencyServices = document.getElementById('emergency-services');
+        emergencyServices.innerHTML = '';
+        
+        const ambulanceItem = createFacilityItem(data.ambulance_info, 'ambulance');
+        emergencyServices.appendChild(ambulanceItem);
+    }
+    
+    // Show facilities container
+    facilitiesContainer.classList.remove('hidden');
+    facilitiesContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+/**
+ * Create facility item element
+ */
+function createFacilityItem(facility, type) {
+    const item = document.createElement('div');
+    item.className = 'facility-item';
+    
+    let icon = '🏥';
+    if (type === 'ambulance') icon = '🚑';
+    if (type === 'clinic') icon = '🏪';
+    
+    item.innerHTML = `
+        <div class="facility-info">
+            <span class="facility-icon">${icon}</span>
+            <div class="facility-details">
+                <h5>${facility.name}</h5>
+                <p><strong>Distance:</strong> ${facility.distance || 'Calculating...'}</p>
+                <p><strong>Contact:</strong> ${facility.contact || facility.phone || 'N/A'}</p>
+                ${facility.emergency_services ? '<p><strong>Emergency Services:</strong> Available 24/7</p>' : ''}
+                ${facility.estimated_time ? `<p><strong>ETA:</strong> ${facility.estimated_time}</p>` : ''}
+            </div>
+        </div>
+        <div class="facility-actions">
+            <button onclick="callFacility('${facility.contact || facility.phone}')" class="btn btn-primary">📞 Call</button>
+            <button onclick="getDirections(${facility.latitude}, ${facility.longitude})" class="btn btn-secondary">🗺️ Directions</button>
+        </div>
+    `;
+    
+    return item;
+}
+
+/**
+ * Refresh current location
+ */
+function refreshLocation() {
+    HealthcareApp.showNotification('Refreshing location...', 'info');
+    getCurrentLocation();
+}
+
+/**
+ * Call emergency services
+ */
+function callEmergency(type) {
+    let number = '911';
+    let service = 'Emergency Services';
+    
+    switch(type) {
+        case 'poison':
+            number = '1-800-222-1222';
+            service = 'Poison Control';
+            break;
+        case 'mental-health':
+            number = '988';
+            service = 'Mental Health Crisis Line';
+            break;
+    }
+    
+    if (confirm(`This will simulate calling ${service} at ${number}. In a real emergency, call immediately.`)) {
+        HealthcareApp.showNotification(`Calling ${service}...`, 'info');
+        
+        // Simulate call
+        setTimeout(() => {
+            alert(`SIMULATION: Connected to ${service}. Help is available.`);
+        }, 2000);
+    }
+}
+
+/**
+ * Call a medical facility
+ */
+function callFacility(phone) {
+    if (!phone || phone === 'N/A') {
+        HealthcareApp.showNotification('Phone number not available', 'warning');
+        return;
+    }
+    
+    if (confirm(`Call ${phone}?`)) {
+        HealthcareApp.showNotification(`Calling ${phone}...`, 'info');
+        
+        // In a real app, this would initiate a phone call
+        setTimeout(() => {
+            alert(`SIMULATION: Calling ${phone}`);
+        }, 1000);
+    }
+}
+
+/**
+ * Get directions to facility
+ */
+function getDirections(lat, lng) {
+    if (!currentLocation) {
+        HealthcareApp.showNotification('Current location not available', 'warning');
+        return;
+    }
+    
+    // Create Google Maps URL
+    const mapsUrl = `https://www.google.com/maps/dir/${currentLocation.latitude},${currentLocation.longitude}/${lat},${lng}`;
+    
+    if (confirm('Open directions in Google Maps?')) {
+        window.open(mapsUrl, '_blank');
+    }
+}
+
+/**
+ * Share location via different methods
+ */
+function shareLocation(method) {
+    if (!currentLocation) {
+        HealthcareApp.showNotification('Please get your location first', 'warning');
+        return;
+    }
+    
+    const locationText = `My current location: https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+    
+    switch(method) {
+        case 'sms':
+            const smsUrl = `sms:?body=${encodeURIComponent(locationText)}`;
+            window.open(smsUrl);
+            break;
+            
+        case 'email':
+            const emailUrl = `mailto:?subject=My Location&body=${encodeURIComponent(locationText)}`;
+            window.open(emailUrl);
+            break;
+    }
+    
+    HealthcareApp.showNotification('Location sharing initiated', 'success');
+}
+
+/**
+ * Copy location link to clipboard
+ */
+function copyLocationLink() {
+    if (!currentLocation) {
+        HealthcareApp.showNotification('Please get your location first', 'warning');
+        return;
+    }
+    
+    const locationUrl = `https://www.google.com/maps?q=${currentLocation.latitude},${currentLocation.longitude}`;
+    
+    // Show the link input
+    const linkContainer = document.getElementById('location-link');
+    const linkInput = document.getElementById('location-url');
+    
+    linkInput.value = locationUrl;
+    linkContainer.classList.remove('hidden');
+    
+    // Copy to clipboard
+    linkInput.select();
+    linkInput.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        HealthcareApp.showNotification('Location link copied to clipboard!', 'success');
+    } catch (err) {
+        HealthcareApp.showNotification('Failed to copy link. Please copy manually.', 'warning');
+    }
+}
+
+// Auto-get location on page load if user has previously granted permission
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if geolocation is available
+    if (navigator.geolocation) {
+        // Try to get location with no UI changes (silent attempt)
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                // Only update if successful and user hasn't manually requested location
+                if (!currentLocation) {
+                    handleLocationSuccess(position);
+                }
+            },
+            function(error) {
+                // Silently fail - user can manually request location
+                console.log('Auto-location failed:', error.message);
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 300000 // 5 minutes
+            }
+        );
+    }
+});
+</script>
+
+<style>
+/* Location Page Specific Styles */
+
+.location-status {
+    text-align: center;
+    padding: 1rem;
+}
+
+.location-display {
+    background: var(--bg-accent);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+}
+
+.location-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.facility-section {
+    margin-bottom: 2rem;
+}
+
+.facility-section h4 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.facility-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.facility-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-light);
+}
+
+.facility-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.facility-icon {
+    font-size: 2rem;
+}
+
+.facility-details h5 {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.facility-details p {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.facility-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.emergency-contact-card {
+    background: linear-gradient(135deg, var(--emergency-color), #c0392b);
+    color: var(--text-light);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    margin: 2rem 0;
+    box-shadow: var(--shadow-medium);
+}
+
+.emergency-contact-card h3 {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.emergency-contacts {
+    display: grid;
+    gap: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+}
+
+.contact-icon {
+    font-size: 2rem;
+}
+
+.contact-info {
+    flex: 1;
+}
+
+.contact-info strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.contact-info p {
+    margin: 0;
+    color: var(--text-light);
+}
+
+.share-options {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.location-link {
+    margin-top: 1rem;
+}
+
+/* Mobile responsiveness */
+@media screen and (max-width: 768px) {
+    .facility-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .facility-actions {
+        justify-content: center;
+    }
+    
+    .location-actions {
+        flex-direction: column;
+    }
+    
+    .share-options {
+        flex-direction: column;
+    }
+    
+    .contact-item {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

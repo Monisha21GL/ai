@@ -1,0 +1,31 @@
+name,specialization,availability,contact,rating,experience_years,hospital_affiliation
+Dr. John Smith,General Medicine,Available,1234567890,4.5,15,City General Hospital
+Dr. Sarah Johnson,Cardiology,Available,1234567891,4.8,12,St. Mary's Medical Center
+Dr. Michael Brown,Neurology,Busy,1234567892,4.6,18,City General Hospital
+Dr. Emily Davis,Dermatology,Available,1234567893,4.7,10,Skin Care Clinic
+Dr. Robert Wilson,Orthopedics,Available,1234567894,4.4,20,Bone & Joint Center
+Dr. Lisa Anderson,Pediatrics,Available,1234567895,4.9,8,Children's Hospital
+Dr. David Martinez,Psychiatry,Busy,1234567896,4.3,14,Mental Health Center
+Dr. Jennifer Taylor,Gynecology,Available,1234567897,4.6,16,Women's Health Clinic
+Dr. Christopher Lee,Emergency Medicine,Available,1234567898,4.7,11,City General Hospital
+Dr. Amanda White,Internal Medicine,Available,1234567899,4.5,13,Internal Medicine Associates
+Dr. James Thompson,Gastroenterology,Busy,1234567800,4.8,19,Digestive Health Center
+Dr. Maria Garcia,Endocrinology,Available,1234567801,4.4,9,Diabetes & Hormone Clinic
+Dr. Kevin Clark,Pulmonology,Available,1234567802,4.6,17,Lung Health Institute
+Dr. Rachel Adams,Rheumatology,Available,1234567803,4.5,12,Arthritis Treatment Center
+Dr. Thomas Hall,Urology,Busy,1234567804,4.7,15,Men's Health Clinic
+Dr. Patricia Johnson,Infectious Disease,Available,+1234567810,4.7,14,City General Hospital
+Dr. Mark Williams,Oncology,Busy,+1234567811,4.9,22,St. Mary's Medical Center
+Dr. Susan Brown,Nephrology,Available,+1234567812,4.6,16,Kidney Care Center
+Dr. Robert Davis,Ophthalmology,Available,+1234567813,4.8,18,Eye Care Institute
+Dr. Linda Miller,Hematology,Busy,+1234567814,4.5,12,Blood Disorders Clinic
+Dr. William Wilson,Anesthesiology,Available,+1234567815,4.4,20,City General Hospital
+Dr. Mary Moore,Radiology,Available,+1234567816,4.7,15,Imaging Center
+Dr. Charles Taylor,Pathology,Available,+1234567817,4.6,19,Diagnostic Laboratory
+Dr. Barbara Anderson,Physical Medicine,Available,+1234567818,4.5,11,Rehabilitation Center
+Dr. Richard Thomas,Plastic Surgery,Busy,+1234567819,4.8,17,Cosmetic Surgery Center
+Dr. Nancy Jackson,Geriatrics,Available,+1234567820,4.6,21,Senior Care Clinic
+Dr. Daniel White,Sports Medicine,Available,+1234567821,4.7,13,Sports Medicine Institute
+Dr. Karen Harris,Allergy and Immunology,Available,+1234567822,4.8,16,Allergy Treatment Center
+Dr. Joseph Martin,Pain Management,Busy,+1234567823,4.5,14,Pain Relief Clinic
+Dr. Lisa Thompson,Occupational Medicine,Available,+1234567824,4.4,10,Workplace Health Center

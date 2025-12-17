@@ -1,0 +1,26 @@
+name,latitude,longitude,contact,emergency_services,specialties,rating
+City General Hospital,40.7128,-74.006,1234567800,True,"Emergency Medicine,General Medicine,Cardiology,Neurology",4.6
+St. Mary's Medical Center,40.7589,-73.9851,1234567801,True,"Cardiology,Oncology,Surgery,Pediatrics",4.8
+Children's Hospital,40.7505,-73.9934,1234567802,True,"Pediatrics,Neonatal Care,Child Surgery",4.9
+Mental Health Center,40.7282,-73.9942,1234567803,False,"Psychiatry,Psychology,Addiction Treatment",4.4
+Women's Health Clinic,40.7614,-73.9776,1234567804,False,"Gynecology,Obstetrics,Women's Health",4.7
+Bone & Joint Center,40.7831,-73.9712,1234567805,False,"Orthopedics,Sports Medicine,Physical Therapy",4.5
+Skin Care Clinic,40.7489,-73.968,1234567806,False,"Dermatology,Cosmetic Surgery,Skin Cancer Treatment",4.6
+Digestive Health Center,40.7359,-74.0014,1234567807,False,"Gastroenterology,Hepatology,Endoscopy",4.7
+Diabetes & Hormone Clinic,40.7677,-73.9537,1234567808,False,"Endocrinology,Diabetes Care,Hormone Therapy",4.5
+Lung Health Institute,40.7505,-73.9934,1234567809,False,"Pulmonology,Respiratory Therapy,Sleep Medicine",4.6
+Kidney Care Center,40.7505,-73.9934,+1234567825,false,"Nephrology,Dialysis,Kidney Transplant",4.5
+Eye Care Institute,40.7282,-73.9942,+1234567826,false,"Ophthalmology,Eye Surgery,Vision Care",4.8
+Blood Disorders Clinic,40.7614,-73.9776,+1234567827,false,"Hematology,Blood Cancer,Transfusion",4.6
+Imaging Center,40.7831,-73.9712,+1234567828,false,"Radiology,MRI,CT Scan,Ultrasound",4.7
+Diagnostic Laboratory,40.7489,-73.9680,+1234567829,false,"Pathology,Lab Tests,Biopsy",4.5
+Rehabilitation Center,40.7359,-74.0014,+1234567830,false,"Physical Therapy,Occupational Therapy",4.6
+Cosmetic Surgery Center,40.7677,-73.9537,+1234567831,false,"Plastic Surgery,Cosmetic Procedures",4.8
+Senior Care Clinic,40.7505,-73.9934,+1234567832,false,"Geriatrics,Elder Care,Memory Care",4.7
+Sports Medicine Institute,40.7128,-74.0060,+1234567833,false,"Sports Medicine,Orthopedics,Physical Therapy",4.6
+Allergy Treatment Center,40.7589,-73.9851,+1234567834,false,"Allergy,Immunology,Asthma Treatment",4.8
+Pain Relief Clinic,40.7282,-73.9942,+1234567835,false,"Pain Management,Chronic Pain,Interventional Pain",4.5
+Workplace Health Center,40.7614,-73.9776,+1234567836,false,"Occupational Medicine,Work Injuries",4.4
+Emergency Trauma Center,40.7831,-73.9712,+1234567837,true,"Emergency Medicine,Trauma Surgery,Critical Care",4.9
+Cardiac Surgery Center,40.7489,-73.9680,+1234567838,true,"Cardiac Surgery,Heart Procedures,ICU",4.8
+Neurological Institute,40.7359,-74.0014,+1234567839,false,"Neurology,Neurosurgery,Brain Disorders",4.7
